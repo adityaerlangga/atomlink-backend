@@ -18,3 +18,4 @@ jobs:
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         server-dir: /home/tamq2554/public_html/atomlink.my.id/
+        local-dir: ./
