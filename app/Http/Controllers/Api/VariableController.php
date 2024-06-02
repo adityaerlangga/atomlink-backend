@@ -33,5 +33,17 @@ class VariableController extends ApiController
         return $this->sendResponse(0, "DAFTAR SATUAN berhasil ditemukan", $data);
     }
 
+    public function banks()
+    {
+        $selects = [
+            'bank_code',
+            'bank_name',
+            'bank_logo',
+            'bank_account_number',
+            'bank_account_holder',
+        ];
 
+        $data = DB::table('variable_banks')->select($selects)->get();
+        return $this->sendResponse(0, "DAFTAR BANK berhasil ditemukan", $data);
+    }
 }

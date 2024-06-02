@@ -1,38 +1,20 @@
-name: Publish Laravel Project to CPanel
-
+name: Publish Website to CPanel
 on:
   push:
     branches:
-      - develop
-
+      - main
 jobs:
-  build:
+  FTP-Deploy-Action:
+    name: FTP-Deploy-Action
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2.1.0
       with:
-        fetch-depth: 0
-
-    - name: Set up PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2'
-
-    - name: Install Composer dependencies
-      run: composer install --prefer-dist --no-progress --optimize-autoloader --no-interaction
-
-    - name: Install NPM dependencies
-      run: npm install
-
-    - name: Build assets
-      run: npm run build
-
-    - name: Deploy to CPanel
+        fetch-depth: 2
+    - name: FTP-Deploy-Action
       uses: SamKirkland/FTP-Deploy-Action@4.3.3
       with:
         server: ${{ secrets.SERVER }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
-        local-dir: ./
         server-dir: /home/tamq2554/public_html/atomlink.my.id/

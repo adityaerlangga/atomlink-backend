@@ -15,6 +15,7 @@ Route::post('owner/login', [OwnerController::class, 'login']);
 Route::prefix('variable')->group(function() {
     Route::get('cities', [VariableController::class, 'cities']);
     Route::get('units', [VariableController::class, 'units']);
+    Route::get('banks', [VariableController::class, 'banks']);
 });
 
 Route::group(['middleware' => 'auth:owners'], function() {
