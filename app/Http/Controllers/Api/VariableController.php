@@ -33,6 +33,7 @@ class VariableController extends ApiController
         return $this->sendResponse(0, "DAFTAR SATUAN berhasil ditemukan", $data);
     }
 
+
     public function banks()
     {
         $selects = [

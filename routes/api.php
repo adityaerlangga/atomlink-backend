@@ -12,6 +12,9 @@ Route::post('validateOtp', [OwnerController::class, 'validateOtp']);
 Route::post('owner/register', [OwnerController::class, 'register']);
 Route::post('owner/login', [OwnerController::class, 'login']);
 
+// CRONJOB AUTO CANCEL EXPIRED TOPUP //
+Route::get('auto_cancel', [TopupController::class, 'autoCancel']);
+
 Route::prefix('variable')->group(function() {
     Route::get('cities', [VariableController::class, 'cities']);
     Route::get('units', [VariableController::class, 'units']);
@@ -33,7 +36,6 @@ Route::group(['middleware' => 'auth:owners'], function() {
         Route::post('create', [TopupController::class, 'create']);
         Route::post('success', [TopupController::class, 'success']);
 
-        // CRONJOB AUTO CANCEL EXPIRED TOPUP //
-        Route::get('auto_cancel', [TopupController::class, 'autoCancel']);
+
     });
 });
