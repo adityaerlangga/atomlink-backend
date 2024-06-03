@@ -16,7 +16,60 @@ class OutletController extends ApiController
         $this->middleware('auth:api', ['except' => []]);
     }
 
-    public function create(Request $request)
+    public function index()
+    {
+        $selects = [
+            'outlets.outlet_code',
+            'outlets.owner_code',
+            'outlets.outlet_name',
+            'outlets.outlet_phone_number',
+            'variable_cities.city_name as city_name',
+            'outlets.outlet_address',
+            'outlets.outlet_logo',
+        ];
+
+        $data = Outlet::where('is_deleted', 0)
+            ->leftJoin('variable_cities', 'outlets.city_code', '=', 'variable_cities.city_code')
+            ->select($selects)
+            ->get();
+
+        if (!$data) {
+            return $this->sendError(1, "Outlet tidak ditemukan", null);
+        }
+
+        if ($data->isEmpty()) {
+            return $this->sendError(1, "Outlet belum terdaftar", null);
+        }
+
+        return $this->sendResponse(0, "Outlet berhasil ditemukan", $data);
+    }
+
+    public function show($outlet_code)
+    {
+        $selects = [
+            'outlets.outlet_code',
+            'outlets.owner_code',
+            'outlets.outlet_name',
+            'outlets.outlet_phone_number',
+            'variable_cities.city_name as city_name',
+            'outlets.outlet_address',
+            'outlets.outlet_logo',
+        ];
+
+        $data = Outlet::where('outlet_code', $outlet_code)
+            ->where('is_deleted', 0)
+            ->leftJoin('variable_cities', 'outlets.city_code', '=', 'variable_cities.city_code')
+            ->select($selects)
+            ->first();
+
+        if (!$data) {
+            return $this->sendError(1, "Outlet tidak ditemukan", null);
+        }
+
+        return $this->sendResponse(0, "Outlet berhasil ditemukan", $data);
+    }
+
+    public function store(Request $request)
     {
         $rules = [
             'owner_code' => 'required|max:255',
@@ -60,6 +113,66 @@ class OutletController extends ApiController
         }
     }
 
+    public function update(Request $request, $outlet_code)
+    {
+        $rules = [
+            'outlet_name' => 'required|max:255',
+            'outlet_phone_number' => 'required|max:15',
+            'city_code' => 'required|max:255',
+            'outlet_address' => 'required|max:255',
+            'outlet_logo' => 'nullable',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+        }
+
+        $outlet = Outlet::where('outlet_code', $outlet_code)->first();
+        if (!$outlet) {
+            return $this->sendError(1, "Data Outlet tidak ditemukan", null);
+        }
+
+        DB::beginTransaction();
+        try {
+            $outlet->update([
+                'outlet_name' => $request->outlet_name,
+                'outlet_phone_number' => $request->outlet_phone_number,
+                'city_code' => $request->city_code,
+                'outlet_address' => $request->outlet_address,
+                'outlet_logo' => $request->outlet_logo ?? null,
+            ]);
+
+            DB::commit();
+            return $this->sendResponse(0, "Outlet berhasil diperbarui", $outlet);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError(2, "Outlet gagal diperbarui", $e->getMessage());
+        }
+    }
+
+    public function destroy($outlet_code)
+    {
+        $outlet = Outlet::where('outlet_code', $outlet_code)->first();
+        if (!$outlet) {
+            return $this->sendError(1, "Data Outlet tidak ditemukan", null);
+        }
+
+        DB::beginTransaction();
+        try {
+            $outlet->update([
+                'is_deleted' => 1,
+            ]);
+
+            DB::commit();
+            return $this->sendResponse(0, "Outlet berhasil dihapus", []);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError(2, "Outlet gagal dihapus", $e->getMessage());
+        }
+    }
+
     public function getOwnerOutlets($owner_code)
     {
         $selects = [
@@ -79,6 +192,7 @@ class OutletController extends ApiController
         }
 
         $data = Outlet::where('owner_code', $owner_code)
+            ->where('is_deleted', 0)
             ->leftJoin('variable_cities', 'outlets.city_code', '=', 'variable_cities.city_code')
             ->select($selects)
             ->get();
@@ -93,6 +207,4 @@ class OutletController extends ApiController
 
         return $this->sendResponse(0, "Outlet berhasil ditemukan", $data);
     }
-
-
 }

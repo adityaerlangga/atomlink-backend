@@ -18,14 +18,14 @@ return new class extends Migration
             $table->string('customer_name', 255);
             $table->string('customer_gender', 255);
             $table->string('customer_title', 255); // SAPAAN (KAK, GAN, SAUDARI, MBAK, BU, SOBAT, SAHABAT, NONA, NYONYA, YTH, IBU)
+            $table->string('customer_whatsapp_number', 255)->nullable();
 
-            $table->string('customer_phone_number', 255)->nullable();
             $table->boolean('is_customer_have_addresses')->default(false); // GET FROM CUSTOMER_ADDRESSES TABLE
 
             // instansi, tanggal_lahir, agama, email
             $table->string('customer_institution', 255)->nullable();
             $table->string('customer_birth_date', 255)->nullable();
-            $table->string('customer_religion', 255)->nullable(); // untuk promo hari-hari agama
+            $table->string('customer_religion', 255)->nullable(); // untuk promo hari-hari agama (ISLAM, KRISTEN, KATOLIK, HINDU, BUDDHA, KONGHUCU, DLL)
             $table->string('customer_email', 255)->nullable();
 
             $table->boolean('is_deleted')->default(false);

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CustomerController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Api\OwnerController;
@@ -55,13 +56,19 @@ Route::prefix('variable')->group(function() {
 
 Route::group(['middleware' => 'auth:owners'], function() {
     Route::prefix('outlets')->group(function() {
-        Route::post('create', [OutletController::class, 'create']);
-        Route::get('get_owner_outlets/{owner_code}', [OutletController::class, 'getOwnerOutlets']);
+        Route::resource('/', OutletController::class)->parameters(['' => 'outlet_code']);
+        Route::get('owner/{owner_code}', [OutletController::class, 'getOwnerOutlets']);
     });
 
     Route::prefix('workshops')->group(function() {
-        Route::post('create', [WorkshopController::class, 'create']);
-        Route::get('get_owner_workshops/{owner_code}', [WorkshopController::class, 'getOwnerWorkshops']);
+        Route::resource('/', WorkshopController::class)->parameters(['' => 'workshop_code']);
+        Route::get('owner/{owner_code}', [WorkshopController::class, 'getOwnerWorkshops']);
+    });
+
+    Route::prefix('customers')->group(function() {
+        Route::resource('/', CustomerController::class)->parameters(['' => 'customer_code']);
+        Route::get('owner/{owner_code}', [CustomerController::class, 'getOwnerCustomers']);
+        Route::get('outlet/{owner_code}', [CustomerController::class, 'getOutletCustomers']);
     });
 
     Route::prefix('topups')->group(function() {
