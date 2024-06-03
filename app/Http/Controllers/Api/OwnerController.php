@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\ApiController;
+use App\Http\Repositories\CoinRepository;
 use App\Http\Repositories\LogBalanceRepository;
 
 class OwnerController extends ApiController
@@ -23,11 +24,11 @@ class OwnerController extends ApiController
     // 4.2. JIKA OWNER SUDAH TERDAFTAR, LOGIN DASHBOARD
     // 4.3. JIKA OWNER BELUM TERDAFTAR, REGISTER
 
-    protected $logBalanceRepository;
+    protected $coinRepository;
 
-    public function __construct(LogBalanceRepository $logBalanceRepository)
+    public function __construct(CoinRepository $coinRepository)
     {
-        $this->logBalanceRepository = $logBalanceRepository;
+        $this->coinRepository = $coinRepository;
     }
 
     public function requestOtp(Request $request)
@@ -193,7 +194,9 @@ class OwnerController extends ApiController
 
             // BONUS OWNER BARU
             $bonus_saldo = 25000;
-            $this->logBalanceRepository->IncomeBalance($data_owner->owner_code, 'TOPUP', $bonus_saldo, 'Bonus Saldo Pendaftaran Owner Baru');
+
+            // UPDATE OWNER BALANCE
+            $this->coinRepository->updateBalance($request->owner_code, 'INCOME', 'REGISTER', $bonus_saldo, 'Bonus Saldo Pendaftaran Owner Baru');
 
             $data_owner->owner_name = $request->owner_name;
             $data_owner->city_code = $request->city_code;

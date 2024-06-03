@@ -67,7 +67,7 @@ Route::group(['middleware' => 'auth:owners'], function() {
     Route::prefix('topups')->group(function() {
         Route::post('create', [TopupController::class, 'create']);
         Route::post('success', [TopupController::class, 'success']);
-
-
+        Route::get('all', [TopupController::class, 'all']);
+        Route::get('get_owner_topups/{owner_code}', [TopupController::class, 'getOwnerTopups']);
     });
 });

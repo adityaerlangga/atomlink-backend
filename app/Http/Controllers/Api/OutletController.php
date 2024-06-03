@@ -60,7 +60,7 @@ class OutletController extends ApiController
         }
     }
 
-    public function getOwnerWorkshops($owner_code)
+    public function getOwnerOutlets($owner_code)
     {
         $selects = [
             'outlets.outlet_code',
@@ -85,6 +85,10 @@ class OutletController extends ApiController
 
         if (!$data) {
             return $this->sendError(1, "Outlet tidak ditemukan", null);
+        }
+
+        if ($data->isEmpty()) {
+            return $this->sendError(1, "Owner belum memiliki Outlet yang terdaftar", null);
         }
 
         return $this->sendResponse(0, "Outlet berhasil ditemukan", $data);

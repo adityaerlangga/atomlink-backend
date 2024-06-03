@@ -11,15 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('log_coins', function (Blueprint $table) {
+        Schema::create('topups', function (Blueprint $table) {
             $table->id();
-            $table->string('log_coin_code', 255)->unique()->index();
+            $table->string('topup_code', 255)->unique()->index();
             $table->string('owner_code', 255)->index(); // FROM OWNERS TABLE
-            $table->string('log_coin_type', 255); // INCOME OR EXPENSE
-            $table->string('log_coin_category', 255); // TOPUP, TRANSACTION, WHATSAPP_TRANSACTION, MASS_INVOICE
-            $table->string('log_coin_amount', 255);
-            $table->string('log_coin_new_balance', 255);
-            $table->string('log_coin_description', 255);
+            $table->string('bank_code', 255); // BANK CODE
+            $table->string('topup_amount', 255);
+            $table->string('topup_amount_unique_code', 255);
+            $table->string('topup_status', 255)->default('PENDING');
             $table->boolean('is_deleted')->default(false);
             $table->timestamps();
         });
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('log_coins');
+        Schema::dropIfExists('topups');
     }
 };

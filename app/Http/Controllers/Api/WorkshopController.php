@@ -127,6 +127,10 @@ class WorkshopController extends ApiController
             return $this->sendError(1, "Workshop tidak ditemukan", null);
         }
 
+        if ($data->isEmpty()) {
+            return $this->sendError(1, "Owner belum memiliki Workshop yang terdaftar", null);
+        }
+
         return $this->sendResponse(0, "Workshop berhasil ditemukan", $data);
     }
 
