@@ -77,7 +77,7 @@ class OutletController extends ApiController
             'outlet_phone_number' => 'required|max:15',
             'city_code' => 'required|max:255',
             'outlet_address' => 'required|max:255',
-            'outlet_logo' => 'nullable',
+            'outlet_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ];
 
         $validator = validateThis($request, $rules);
@@ -95,6 +95,15 @@ class OutletController extends ApiController
         $outlet_code = generateFiledCode('OUTLET');
         DB::beginTransaction();
         try {
+            // outlet logo, save to storage
+            if ($request->hasFile('outlet_logo')) {
+                $outlet_logo = $request->file('outlet_logo');
+                $outlet_logo_name = $outlet_code . '.' . $outlet_logo->getClientOriginalExtension();
+                $outlet_logo->storeAs('public/outlet_logo', $outlet_logo_name);
+                $outlet_logo_path = 'storage/outlet_logo/' . $outlet_logo_name;
+            }
+
+
             $data = Outlet::create([
                 'outlet_code' => $outlet_code,
                 'owner_code' => $request->owner_code,
@@ -102,7 +111,7 @@ class OutletController extends ApiController
                 'outlet_phone_number' => $request->outlet_phone_number,
                 'city_code' => $request->city_code,
                 'outlet_address' => $request->outlet_address,
-                'outlet_logo' => $request->outlet_logo ?? null,
+                'outlet_logo' => $outlet_logo_path ?? null,
             ]);
 
             DB::commit();
