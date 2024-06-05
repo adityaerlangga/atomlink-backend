@@ -38,7 +38,7 @@ class TopupRepository extends ApiController
         return $topups;
     }
 
-    public function getOwnerTopups($owner_code)
+    public function getByOwner($owner_code)
     {
         $selects = [
             'topups.topup_code',

@@ -261,7 +261,7 @@ class WorkshopController extends ApiController
         }
     }
 
-    public function getOwnerWorkshops($owner_code)
+    public function getByOwner($owner_code)
     {
         $selects = [
             'workshops.workshop_code',

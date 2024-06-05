@@ -32,9 +32,9 @@ class TopupController extends ApiController
         return $this->sendResponse(0, "Berhasil mendapatkan data topup", $topups);
     }
 
-    public function getOwnerTopups($owner_code)
+    public function getByOwner($owner_code)
     {
-        $topups = $this->topupRepository->getOwnerTopups($owner_code);
+        $topups = $this->topupRepository->getByOwner($owner_code);
 
         if($topups->isEmpty()) {
             return $this->sendError(1, "Data topup tidak ditemukan");

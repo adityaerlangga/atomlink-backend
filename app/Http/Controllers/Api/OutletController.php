@@ -173,7 +173,7 @@ class OutletController extends ApiController
         }
     }
 
-    public function getOwnerOutlets($owner_code)
+    public function getByOwner($owner_code)
     {
         $selects = [
             'outlets.outlet_code',

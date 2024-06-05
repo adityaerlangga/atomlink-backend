@@ -240,7 +240,7 @@ class CustomerController extends ApiController
         }
     }
 
-    public function getOwnerCustomers($owner_code)
+    public function getByOwner($owner_code)
     {
         $selects = [
             'customers.customer_code',
@@ -292,7 +292,7 @@ class CustomerController extends ApiController
         return $this->sendResponse(0, "Customer berhasil ditemukan", $data);
     }
 
-    public function getOutletCustomers($outlet_code)
+    public function getByOutlet($outlet_code)
     {
         $selects = [
             'customers.customer_code',

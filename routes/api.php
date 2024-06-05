@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Api\OwnerController;
 use App\Http\Controllers\Api\TopupController;
 use App\Http\Controllers\Api\OutletController;
+use App\Http\Controllers\Api\ParfumeController;
 use App\Http\Controllers\Api\VariableController;
 use App\Http\Controllers\Api\WorkshopController;
 
@@ -57,24 +58,29 @@ Route::prefix('variable')->group(function() {
 Route::group(['middleware' => 'auth:owners'], function() {
     Route::prefix('outlets')->group(function() {
         Route::resource('/', OutletController::class)->parameters(['' => 'outlet_code']);
-        Route::get('owner/{owner_code}', [OutletController::class, 'getOwnerOutlets']);
+        Route::get('owner/{owner_code}', [OutletController::class, 'getByOwner']);
     });
 
     Route::prefix('workshops')->group(function() {
         Route::resource('/', WorkshopController::class)->parameters(['' => 'workshop_code']);
-        Route::get('owner/{owner_code}', [WorkshopController::class, 'getOwnerWorkshops']);
+        Route::get('owner/{owner_code}', [WorkshopController::class, 'getByOwner']);
     });
 
     Route::prefix('customers')->group(function() {
         Route::resource('/', CustomerController::class)->parameters(['' => 'customer_code']);
-        Route::get('owner/{owner_code}', [CustomerController::class, 'getOwnerCustomers']);
-        Route::get('outlet/{owner_code}', [CustomerController::class, 'getOutletCustomers']);
+        Route::get('owner/{owner_code}', [CustomerController::class, 'getByOwner']);
+        Route::get('outlet/{owner_code}', [CustomerController::class, 'getByOutlet']);
     });
 
     Route::prefix('topups')->group(function() {
         Route::post('create', [TopupController::class, 'create']);
         Route::post('success', [TopupController::class, 'success']);
         Route::get('all', [TopupController::class, 'all']);
-        Route::get('get_owner_topups/{owner_code}', [TopupController::class, 'getOwnerTopups']);
+        Route::get('get_owner_topups/{owner_code}', [TopupController::class, 'getByOwner']);
+    });
+
+    Route::prefix('parfumes')->group(function() {
+        Route::resource('/', ParfumeController::class)->parameters(['' => 'parfume_code']);
+        Route::get('outlet/{outlet_code}', [ParfumeController::class, 'getByOutlet']);
     });
 });
