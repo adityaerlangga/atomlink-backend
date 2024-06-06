@@ -124,12 +124,13 @@ class OutletController extends ApiController
 
     public function update(Request $request, $outlet_code)
     {
+
         $rules = [
             'outlet_name' => 'required|max:255',
             'outlet_phone_number' => 'required|max:15',
             'city_code' => 'required|max:255',
             'outlet_address' => 'required|max:255',
-            'outlet_logo' => 'nullable',
+            'outlet_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ];
 
         $validator = validateThis($request, $rules);
@@ -145,12 +146,30 @@ class OutletController extends ApiController
 
         DB::beginTransaction();
         try {
+            // outlet logo, save to storage, and delete old logo
+            if ($request->hasFile('outlet_logo')) {
+                $outlet_logo = $request->file('outlet_logo');
+                $outlet_logo_name = $outlet_code . '.' . $outlet_logo->getClientOriginalExtension();
+                $outlet_logo->storeAs('public/outlet_logo', $outlet_logo_name);
+                $outlet_logo_path = 'storage/outlet_logo/' . $outlet_logo_name;
+
+                // delete old logo
+                if ($outlet->outlet_logo) {
+                    $old_logo = explode('/', $outlet->outlet_logo);
+                    $old_logo = end($old_logo);
+                    $old_logo_path = 'public/outlet_logo/' . $old_logo;
+                    if (file_exists($old_logo_path)) {
+                        unlink($old_logo_path);
+                    }
+                }
+            }
+
             $outlet->update([
                 'outlet_name' => $request->outlet_name,
                 'outlet_phone_number' => $request->outlet_phone_number,
                 'city_code' => $request->city_code,
                 'outlet_address' => $request->outlet_address,
-                'outlet_logo' => $request->outlet_logo ?? null,
+                'outlet_logo' => $outlet_logo_path ?? $outlet->outlet_logo,
             ]);
 
             DB::commit();

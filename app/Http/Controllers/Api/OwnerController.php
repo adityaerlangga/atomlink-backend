@@ -125,9 +125,17 @@ class OwnerController extends ApiController
             return $this->sendError(2, 'OTP expired');
         }
 
+        $token = JWTAuth::fromUser($data_owner);
+
+        $is_data_completed = true;
+        if($data_owner->owner_name == null || $data_owner->city_code == null || empty($data_owner->owner_name) || empty($data_owner->city_code) ) {
+            $is_data_completed = false;
+        }
 
         $data = [
-            'owner_code' => $data_owner->owner_code,
+            'is_data_completed' => $is_data_completed,
+            'owner' => $data_owner,
+            'token' => $token,
         ];
 
         return $this->sendResponse(0, 'OTP berhasil divalidasi', $data);
