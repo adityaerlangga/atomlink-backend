@@ -19,18 +19,32 @@ return new class extends Migration
             $table->string('service_name', 255);
             $table->string('service_price', 255);
             $table->string('unit_code', 255)->index(); // FROM VARIABLE_UNITS TABLE
-            $table->string('service_duration', 255);
+            $table->string('service_duration_days', 255);
+            $table->string('service_duration_hours', 255);
 
-            // PENGATURAN LANJUTAN
+            // ======== PENGATURAN LANJUTAN ======== //
 
-            // INVENTORY
-            $table->boolean('is_using_inventory')->default(false); // bikin table inventory_used
-            // $table->string('inventory_codes', 1000)->nullable();
+            // KATEGORI LAYANAN
+            $table->string('service_category_code', 255)->index()->nullable(); // FROM VARIABLE_SERVICE_CATEGORIES TABLE
 
             // MINIMUM ORDER QUANTITY
-            $table->boolean('is_minimum_order_quantity')->default(false);
+            $table->boolean('is_minimum_order_quantity_active')->default(false);
             $table->string('minimum_order_quantity_regular', 255)->nullable();
-            $table->string('minimum_order_quantity_deposits', 255)->nullable();
+            $table->string('minimum_order_quantity_deposit', 255)->nullable();
+
+            // BORONGAN KARYAWAN (FEE PER TRX)
+            $table->boolean('is_employees_bonus_fee_active')->default(false);
+            $table->string('bonus_fee_labeling', 255)->nullable();
+            $table->string('bonus_fee_sorting', 255)->nullable();
+            $table->string('bonus_fee_cleaning', 255)->nullable();
+            $table->string('bonus_fee_spotting', 255)->nullable();
+            $table->string('bonus_fee_detailing', 255)->nullable();
+            $table->string('bonus_fee_washing', 255)->nullable();
+            $table->string('bonus_fee_drying', 255)->nullable();
+            $table->string('bonus_fee_ironing', 255)->nullable();
+            $table->string('bonus_fee_extra_ironing', 255)->nullable();
+            $table->string('bonus_fee_folding', 255)->nullable();
+            $table->string('bonus_fee_packaging', 255)->nullable();
 
             $table->boolean('is_deleted')->default(false);
             $table->timestamps();

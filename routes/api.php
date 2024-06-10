@@ -1,14 +1,17 @@
 <?php
 
-use App\Http\Controllers\Api\CustomerController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Api\OwnerController;
 use App\Http\Controllers\Api\TopupController;
 use App\Http\Controllers\Api\OutletController;
 use App\Http\Controllers\Api\ParfumeController;
+use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\VariableController;
 use App\Http\Controllers\Api\WorkshopController;
+use App\Http\Controllers\Api\ProductRackController;
+use App\Http\Controllers\Api\ServiceDepositController;
 
 // ======================= START: SETUP ======================= //
 Route::get('setup', function() {
@@ -30,7 +33,6 @@ Route::get('optimize', function() {
     Artisan::call('cache:clear');
     Artisan::call('event:clear');
 
-
     return response()->json([
         'message' => 'Optimize and clear cache completed'
     ]);
@@ -47,18 +49,10 @@ Route::post('validateOtp', [OwnerController::class, 'validateOtp']);
 Route::post('owner/register', [OwnerController::class, 'register']);
 Route::post('owner/login', [OwnerController::class, 'login']);
 
-
-
-Route::prefix('variable')->group(function() {
-    Route::get('cities', [VariableController::class, 'cities']);
-    Route::get('units', [VariableController::class, 'units']);
-    Route::get('banks', [VariableController::class, 'banks']);
-});
-
 Route::group(['middleware' => 'auth:owners'], function() {
     Route::prefix('outlets')->group(function() {
         Route::resource('/', OutletController::class)->parameters(['' => 'outlet_code']);
-        Route::get('owner/{owner_code}', [OutletController::class, 'getByOwner']);
+        Route::get('owner', [OutletController::class, 'getByOwner']);
     });
 
     Route::prefix('workshops')->group(function() {
@@ -76,11 +70,33 @@ Route::group(['middleware' => 'auth:owners'], function() {
         Route::post('create', [TopupController::class, 'create']);
         Route::post('success', [TopupController::class, 'success']);
         Route::get('all', [TopupController::class, 'all']);
-        Route::get('get_owner_topups/{owner_code}', [TopupController::class, 'getByOwner']);
+        Route::get('owner/{owner_code}', [TopupController::class, 'getByOwner']);
     });
 
     Route::prefix('parfumes')->group(function() {
         Route::resource('/', ParfumeController::class)->parameters(['' => 'parfume_code']);
         Route::get('outlet/{outlet_code}', [ParfumeController::class, 'getByOutlet']);
+    });
+
+    Route::prefix('services')->group(function() {
+        Route::resource('/', ServiceController::class)->parameters(['' => 'service_code']);
+        Route::get('outlet/{outlet_code}', [ServiceController::class, 'getByOutlet']);
+    });
+
+    Route::prefix('service-deposits')->group(function() {
+        Route::resource('/', ServiceDepositController::class)->parameters(['' => 'service_deposit_code']);
+        Route::get('outlet/{outlet_code}', [ServiceDepositController::class, 'getByOutlet']);
+    });
+
+    Route::prefix('product-racks')->group(function() {
+        Route::resource('/', ProductRackController::class)->parameters(['' => 'product_rack_code']);
+        Route::get('outlet/{outlet_code}', [ProductRackController::class, 'getByOutlet']);
+    });
+
+    Route::prefix('variable')->group(function() {
+        Route::get('cities', [VariableController::class, 'cities']);
+        Route::get('units', [VariableController::class, 'units']);
+        Route::get('banks', [VariableController::class, 'banks']);
+        Route::get('service_categories', [VariableController::class, 'service_categories']);
     });
 });

@@ -29,6 +29,7 @@ class OutletsSeeder extends Seeder
                 'city_code' => 'CITY-000' . mt_rand(1,5),
                 'outlet_address' => $faker->address(),
                 'outlet_logo' => null,
+                'workshop_code' => 'WORKSHOP-000' . mt_rand(1,5),
             ]);
 
             $i++;

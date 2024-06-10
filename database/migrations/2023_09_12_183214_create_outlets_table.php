@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('city_code', 255)->index(); // FROM VARIABLE_CITIES TABLE
             $table->string('outlet_address', 255);
             $table->string('outlet_logo', 1000)->nullable();
+            $table->string('workshop_code', 255)->index(); // FROM WORKSHOPS TABLE
             $table->boolean('is_deleted')->default(false);
             $table->timestamps();
         });

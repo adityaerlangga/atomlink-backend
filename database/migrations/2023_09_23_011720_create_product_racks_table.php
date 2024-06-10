@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('product_rack_code', 255)->unique()->index();
             $table->string('outlet_code', 255)->index(); // FROM OUTLET TABLE
-            $table->string('product_rack_categories_code', 255)->index(); // FROM PRODUCT_RACK_CATEGORIES TABLE
+            $table->string('product_rack_category_code', 255)->index()->nullable(); // FROM PRODUCT_RACK_CATEGORIES TABLE
             $table->string('product_rack_name', 255);
             $table->boolean('is_deleted')->default(false);
             $table->timestamps();

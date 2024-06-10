@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('workshop_production_step_code', 255)->unique()->index();
             $table->string('workshop_code', 255)->index(); // FROM WORKSHOP TABLE
-            $table->boolean('workshop_label')->default(false);
+            $table->boolean('workshop_labeling')->default(false);
             $table->boolean('workshop_sorting')->default(false);
             $table->boolean('workshop_cleaning')->default(false);
             $table->boolean('workshop_spotting')->default(false);

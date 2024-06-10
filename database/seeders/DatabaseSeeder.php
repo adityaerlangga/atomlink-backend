@@ -6,8 +6,10 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Database\Seeders\OwnersSeeder;
+use Database\Seeders\ServicesSeeder;
 use Database\Seeders\VariabelUnitsSeeder;
 use Database\Seeders\VariabelCitiesSeeder;
+use Database\Seeders\VariabelServiceCategoriesSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,8 +22,12 @@ class DatabaseSeeder extends Seeder
         $this->call(VariabelCitiesSeeder::class);
         $this->call(VariabelUnitsSeeder::class);
         $this->call(VariabelBanksSeeder::class);
+        $this->call(VariabelServiceCategoriesSeeder::class);
+
 
         $this->call(OwnersSeeder::class);
         $this->call(OutletsSeeder::class);
+        $this->call(WorkshopsSeeder::class);
+        $this->call(ServicesSeeder::class);
     }
 }

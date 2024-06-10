@@ -85,7 +85,9 @@ class OwnerController extends ApiController
                 $data_owner->owner_otp_expired_at = now()->addMinutes(5);
                 $data_owner->update();
 
-                return $this->sendResponse(0, 'OTP berhasil dikirim ke ' . $whatsapp_number);
+                return $this->sendResponse(0, 'OTP berhasil dikirim ke ' . $whatsapp_number, [
+                    'otp' => $otp,
+                ]);
             } else {
                 $error = $response->body();
                 return $this->sendError(2, 'Whatsapp API Provider Error: ENDPOINT *SEND_MESSAGE*', $error);

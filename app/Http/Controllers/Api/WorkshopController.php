@@ -17,8 +17,24 @@ class WorkshopController extends ApiController
         $this->middleware('auth:api', ['except' => []]);
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $rules = [
+            'owner_code' => 'nullable|max:255',
+            'workshop_code' => 'nullable|max:255',
+            'sort_by' => 'nullable|in:workshop_name,created_at',
+            'order_by' => 'nullable|in:ASC,DESC',
+            'limit' => 'nullable|integer',
+            'offset' => 'nullable|integer',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+        }
+
+
         $selects = [
             'workshops.workshop_code',
             'workshops.owner_code',
@@ -26,7 +42,9 @@ class WorkshopController extends ApiController
             'workshops.workshop_phone_number',
             'variable_cities.city_name as city_name',
             'workshops.workshop_address',
-            'workshop_production_steps.workshop_label',
+            'workshops.created_at',
+            'workshops.updated_at',
+            'workshop_production_steps.workshop_labeling',
             'workshop_production_steps.workshop_sorting',
             'workshop_production_steps.workshop_cleaning',
             'workshop_production_steps.workshop_spotting',
@@ -39,10 +57,50 @@ class WorkshopController extends ApiController
             'workshop_production_steps.workshop_packaging',
         ];
 
-        $data = Workshop::where('workshops.is_deleted', 0)
+        $query = Workshop::query();
+
+        if ($request->has('workshop_code')) {
+            $query->where('workshops.workshop_code', $request->workshop_code);
+
+            $data = $query->where('workshops.is_deleted', 0)
+                ->leftJoin('variable_cities', 'workshops.city_code', '=', 'variable_cities.city_code')
+                ->leftJoin('workshop_production_steps', 'workshops.workshop_code', '=', 'workshop_production_steps.workshop_code')
+                ->select($selects)
+                ->first();
+
+            if (!$data) {
+                return $this->sendError(1, "Workshop tidak ditemukan", null);
+            }
+
+            return $this->sendResponse(0, "Workshop berhasil ditemukan", $data);
+        }
+
+        if ($request->has('owner_code')) {
+            $query->where('workshops.owner_code', $request->owner_code);
+        }
+
+
+        // Apply sorting only by workshop_name
+        if ($request->has('sort_by') && $request->sort_by == 'workshop_name') {
+            $order_by = $request->order_by ?? 'ASC';
+            $query->orderBy('workshops.workshop_name', $order_by);
+        }
+
+        // Apply sorting only by created_at
+        if ($request->has('sort_by') && $request->sort_by == 'created_at') {
+            $order_by = $request->order_by ?? 'ASC';
+            $query->orderBy('workshops.created_at', $order_by);
+        }
+
+        $limit = $request->limit ?? 10;
+        $offset = $request->offset ?? 0;
+
+        $data = $query->where('workshops.is_deleted', 0)
             ->leftJoin('variable_cities', 'workshops.city_code', '=', 'variable_cities.city_code')
             ->leftJoin('workshop_production_steps', 'workshops.workshop_code', '=', 'workshop_production_steps.workshop_code')
             ->select($selects)
+            ->limit($limit)
+            ->offset($offset)
             ->get();
 
         if (!$data) {
@@ -50,45 +108,6 @@ class WorkshopController extends ApiController
         }
 
         if ($data->isEmpty()) {
-            return $this->sendError(1, "Belum ada workshop terdaftar di dalam sistem", null);
-        }
-
-        return $this->sendResponse(0, "Workshop berhasil ditemukan", $data);
-    }
-
-    public function show($workshop_code)
-    {
-        $selects = [
-            'workshops.workshop_code',
-            'workshops.owner_code',
-            'workshops.workshop_name',
-            'workshops.workshop_phone_number',
-            'variable_cities.city_name as city_name',
-            'workshops.workshop_address',
-        ];
-
-        $data = Workshop::where('workshops.workshop_code', $workshop_code)
-            ->where('workshops.is_deleted', 0)
-            ->leftJoin('variable_cities', 'workshops.city_code', '=', 'variable_cities.city_code')
-            ->select($selects)
-            ->first();
-
-        $selects_production_steps = [
-            'workshop_label',
-            'workshop_sorting',
-            'workshop_cleaning',
-            'workshop_spotting',
-            'workshop_detailing',
-            'workshop_washing',
-            'workshop_drying',
-            'workshop_ironing',
-            'workshop_extra_ironing',
-            'workshop_folding',
-            'workshop_packaging',
-        ];
-        $data->workshop_production_steps = WorkshopProductionStep::where('workshop_code', $workshop_code)->select($selects_production_steps)->first();
-
-        if (!$data) {
             return $this->sendError(1, "Workshop tidak ditemukan", null);
         }
 
@@ -105,7 +124,7 @@ class WorkshopController extends ApiController
             'workshop_address' => 'required|max:255',
 
             // Workshop Production Step
-            'workshop_label' => 'required|boolean',
+            'workshop_labeling' => 'required|boolean',
             'workshop_sorting' => 'required|boolean',
             'workshop_cleaning' => 'required|boolean',
             'workshop_spotting' => 'required|boolean',
@@ -146,7 +165,7 @@ class WorkshopController extends ApiController
             WorkshopProductionStep::create([
                 'workshop_production_step_code' => generateFiledCode('WORKSHOP_PS'),
                 'workshop_code' => $workshop_code,
-                'workshop_label' => $request->workshop_label,
+                'workshop_labeling' => $request->workshop_labeling,
                 'workshop_sorting' => $request->workshop_sorting,
                 'workshop_cleaning' => $request->workshop_cleaning,
                 'workshop_spotting' => $request->workshop_spotting,
@@ -179,7 +198,7 @@ class WorkshopController extends ApiController
             'workshop_address' => 'required|max:255',
 
             // Workshop Production Step
-            'workshop_label' => 'required|boolean',
+            'workshop_labeling' => 'required|boolean',
             'workshop_sorting' => 'required|boolean',
             'workshop_cleaning' => 'required|boolean',
             'workshop_spotting' => 'required|boolean',
@@ -216,7 +235,7 @@ class WorkshopController extends ApiController
             // Workshop Production Step
             $workshopProductionStep = WorkshopProductionStep::where('workshop_code', $workshop_code)->first();
             $workshopProductionStep->update([
-                'workshop_label' => $request->workshop_label,
+                'workshop_labeling' => $request->workshop_labeling,
                 'workshop_sorting' => $request->workshop_sorting,
                 'workshop_cleaning' => $request->workshop_cleaning,
                 'workshop_spotting' => $request->workshop_spotting,
@@ -259,52 +278,6 @@ class WorkshopController extends ApiController
             DB::rollBack();
             return $this->sendError(2, "Workshop gagal dihapus", $e->getMessage());
         }
-    }
-
-    public function getByOwner($owner_code)
-    {
-        $selects = [
-            'workshops.workshop_code',
-            'workshops.owner_code',
-            'workshops.workshop_name',
-            'workshops.workshop_phone_number',
-            'variable_cities.city_name as city_name',
-            'workshops.workshop_address',
-            'workshop_production_steps.workshop_label',
-            'workshop_production_steps.workshop_sorting',
-            'workshop_production_steps.workshop_cleaning',
-            'workshop_production_steps.workshop_spotting',
-            'workshop_production_steps.workshop_detailing',
-            'workshop_production_steps.workshop_washing',
-            'workshop_production_steps.workshop_drying',
-            'workshop_production_steps.workshop_ironing',
-            'workshop_production_steps.workshop_extra_ironing',
-            'workshop_production_steps.workshop_folding',
-            'workshop_production_steps.workshop_packaging',
-        ];
-
-        // VALIDATE OWNER_CODE
-        $owner = Owner::where('owner_code', $owner_code)->first();
-        if (!$owner) {
-            return $this->sendError(1, "Data Owner tidak ditemukan", null);
-        }
-
-        $data = Workshop::where('owner_code', $owner_code)
-            ->where('workshops.is_deleted', 0)
-            ->leftJoin('variable_cities', 'workshops.city_code', '=', 'variable_cities.city_code')
-            ->leftJoin('workshop_production_steps', 'workshops.workshop_code', '=', 'workshop_production_steps.workshop_code')
-            ->select($selects)
-            ->get();
-
-        if (!$data) {
-            return $this->sendError(1, "Workshop tidak ditemukan", null);
-        }
-
-        if ($data->isEmpty()) {
-            return $this->sendError(1, "Owner belum memiliki Workshop yang terdaftar", null);
-        }
-
-        return $this->sendResponse(0, "Workshop berhasil ditemukan", $data);
     }
 
 

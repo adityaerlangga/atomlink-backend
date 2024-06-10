@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('workshop_phone_number', 255);
             $table->string('city_code', 255)->index(); // FROM VARIABLE_CITIES TABLE
             $table->string('workshop_address', 255);
+            $table->boolean('is_hide')->default(false);
             $table->boolean('is_deleted')->default(false);
             $table->timestamps();
         });

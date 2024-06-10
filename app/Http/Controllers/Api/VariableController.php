@@ -47,4 +47,15 @@ class VariableController extends ApiController
         $data = DB::table('variable_banks')->select($selects)->get();
         return $this->sendResponse(0, "DAFTAR BANK berhasil ditemukan", $data);
     }
+
+    public function service_categories()
+    {
+        $selects = [
+            'service_category_code',
+            'service_category_name',
+        ];
+
+        $data = DB::table('variable_service_categories')->select($selects)->get();
+        return $this->sendResponse(0, "DAFTAR KATEGORI LAYANAN berhasil ditemukan", $data);
+    }
 }
