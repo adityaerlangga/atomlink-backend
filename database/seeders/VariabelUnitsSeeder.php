@@ -16,11 +16,16 @@ class VariabelUnitsSeeder extends Seeder
             "KOIN", "LOAD", "HELAI", "MILI", "BIJI", "CM"
             ];
 
+        $i = 1;
         foreach ($units as $item) {
+            $service_code = $i <= 5 ? 'UNIT-000' . $i : generateFiledCode('UNIT');
+
             \App\Models\VariableUnits::create([
-                'unit_code' => generateFiledCode('UNIT'),
+                'unit_code' => $service_code,
                 'unit_name' => $item
             ]);
+
+            $i++;
         }
 
     }

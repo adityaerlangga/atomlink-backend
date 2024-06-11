@@ -28,6 +28,7 @@ class OwnerController extends ApiController
 
     public function __construct(CoinRepository $coinRepository)
     {
+        $this->middleware('auth:api', ['except' => ['requestOtp', 'validateOtp', 'register', 'login']]);
         $this->coinRepository = $coinRepository;
     }
 
@@ -40,7 +41,7 @@ class OwnerController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         // VALIDASI NOMOR WHATSAPP OWNER VALID ATAU TIDAK
@@ -107,7 +108,7 @@ class OwnerController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         $whatsapp_number = $request->owner_whatsapp_number;
@@ -130,7 +131,7 @@ class OwnerController extends ApiController
         $token = JWTAuth::fromUser($data_owner);
 
         $is_data_completed = true;
-        if($data_owner->owner_name == null || $data_owner->city_code == null || empty($data_owner->owner_name) || empty($data_owner->city_code) ) {
+        if ($data_owner->owner_name == null || $data_owner->city_code == null || empty($data_owner->owner_name) || empty($data_owner->city_code)) {
             $is_data_completed = false;
         }
 
@@ -188,16 +189,16 @@ class OwnerController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         try {
             $data_owner = Owner::where('owner_code', $request->owner_code)->first();
-            if(!$data_owner) {
+            if (!$data_owner) {
                 return $this->sendError(2, 'OWNER_CODE not found');
             }
 
-            if($data_owner->owner_name || $data_owner->city_code || $data_owner->owner_email) {
+            if ($data_owner->owner_name || $data_owner->city_code || $data_owner->owner_email) {
                 return $this->sendError(2, 'Owner already registered');
             }
 
@@ -238,12 +239,12 @@ class OwnerController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         try {
             $data_owner = Owner::where('owner_code', $request->owner_code)->first();
-            if(!$data_owner) {
+            if (!$data_owner) {
                 return $this->sendError(2, 'Data owner tidak ditemukan');
             }
 
@@ -258,5 +259,278 @@ class OwnerController extends ApiController
         } catch (\Exception $e) {
             return $this->sendError(2, "Gagal login ke dalam aplikasi", $e->getMessage());
         }
+    }
+
+    public function finance(Request $request)
+    {
+        // KAS || FINANCE || KEUANGAN
+        $rules = [
+            'owner_code' => 'required|max:255',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
+        }
+
+        $total_cash_drawers = 1000000;
+        $total_cash_banks = 2000000;
+        $total_cash_merchants = 3000000;
+
+        $financial = [
+            'owner_code' => $request->owner_code,
+            'total_cash_drawers' => $total_cash_drawers,
+            'total_cash_banks' => $total_cash_banks,
+            'total_cash_merchants' => $total_cash_merchants,
+        ];
+
+        return $this->sendResponse(0, 'Data kas berhasil ditemukan', $financial);
+    }
+
+    public function cash_drawers(Request $request)
+    {
+        // PEMASUKAN & PENGELUARAN KAS || CASHFLOW
+        $rules = [
+            'owner_code' => 'required|max:255',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
+        }
+
+        $data = [
+            'total_cash_drawers' => 3000000,
+            'date' => '10 Juni 2024',
+            'outlets' => [
+                [
+                    'outlet_code' => 'OUTLET-0001',
+                    'outlet_name' => 'Superwash',
+                    'city_name' => 'Jakarta',
+                    'outlet_address' => 'Jl Indonesia, Kel Indonesia Kec Indonesia, Indonesia',
+                    'cash' => 1000000,
+                ],
+                [
+                    'outlet_code' => 'OUTLET-0002',
+                    'outlet_name' => 'Superclean',
+                    'city_name' => 'Jakarta',
+                    'outlet_address' => 'Jl Indonesia, Kel Indonesia Kec Indonesia, Indonesia',
+                    'cash' => 2000000,
+                ],
+            ]
+        ];
+
+        return $this->sendResponse(0, 'Data Pemasukan dan Pengeluaran berhasil ditemukan', $data);
+    }
+
+    public function cash_banks(Request $request)
+    {
+        // PEMASUKAN & PENGELUARAN KAS || CASHFLOW
+        $rules = [
+            'owner_code' => 'required|max:255',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
+        }
+
+        $data = [
+            'total_cash_banks' => 4000000,
+            'date' => '10 Juni 2024',
+            'banks' => [
+                [
+                    'bank_code' => 'BANK-0001',
+                    'bank_name' => 'BCA',
+                    'bank_logo' => 'https://www.bca.co.id/assets/images/logo-bca.png',
+                    'cash' => 1000000,
+                ],
+                [
+                    'bank_code' => 'BANK-0002',
+                    'bank_name' => 'Mandiri',
+                    'bank_logo' => 'https://www.bankmandiri.co.id/assets/images/logo-mandiri.png',
+                    'cash' => 2000000,
+                ],
+                [
+                    'bank_code' => 'BANK-0003',
+                    'bank_name' => 'BRI',
+                    'bank_logo' => 'https://www.bri.co.id/assets/images/logo-bri.png',
+                    'cash' => 3000000,
+                ],
+                [
+                    'bank_code' => 'BANK-0004',
+                    'bank_name' => 'BNI',
+                    'bank_logo' => 'https://www.bni.co.id/assets/images/logo-bni.png',
+                    'cash' => 4000000,
+                ],
+            ]
+        ];
+
+        return $this->sendResponse(0, 'Data Pemasukan dan Pengeluaran berhasil ditemukan', $data);
+    }
+
+    public function cash_merchants(Request $request)
+    {
+        // PEMASUKAN & PENGELUARAN KAS || CASHFLOW
+        $rules = [
+            'owner_code' => 'required|max:255',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
+        }
+
+        $data = [
+            'total_cash_merchants' => 2000000,
+            'date' => '10 Juni 2024',
+            'merchants' => [
+                [
+                    'merchant_code' => 'MERCHANT-0001',
+                    'merchant_name' => 'OVO',
+                    'merchant_logo' => 'https://www.ovo.id/assets/images/logo-ovo.png',
+                    'cash' => 1000000,
+                ],
+                [
+                    'merchant_code' => 'MERCHANT-0002',
+                    'merchant_name' => 'DANA',
+                    'merchant_logo' => 'https://www.dana.id/assets/images/logo-dana.png',
+                    'cash' => 2000000,
+                ],
+                [
+                    'merchant_code' => 'MERCHANT-0003',
+                    'merchant_name' => 'GOPAY',
+                    'merchant_logo' => 'https://www.gopay.id/assets/images/logo-gopay.png',
+                    'cash' => 3000000,
+                ],
+            ]
+        ];
+
+        return $this->sendResponse(0, 'Data Pemasukan dan Pengeluaran berhasil ditemukan', $data);
+    }
+
+    public function cashflow(Request $request)
+    {
+        // PEMASUKAN & PENGELUARAN KAS || CASHFLOW
+        $rules = [
+            'owner_code' => 'required|max:255',
+            'date_type' => 'nullable|in:TODAY,WEEK,MONTH,YEAR',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
+        }
+
+        $data = [
+            'income_cash' => 2000000,
+            'income_bank' => 3500000,
+            'expenses' => 1000000,
+        ];
+
+        return $this->sendResponse(0, 'Data Pemasukan dan Pengeluaran berhasil ditemukan', $data);
+    }
+
+    public function gross_revenue(Request $request)
+    {
+        // OMSET || GROSS REVENUE
+        $rules = [
+            'owner_code' => 'required|max:255',
+            'date_type' => 'nullable|in:WEEK,MONTH,YEAR',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
+        }
+
+
+        $data_tahun = [
+            ['Januari' => 100],
+            ['Februari' => 200],
+            ['Maret' => 300],
+            ['April' => 400],
+            ['Mei' => 500],
+            ['Juni' => 600],
+            ['Juli' => 700],
+            ['Agustus' => 800],
+            ['September' => 900],
+            ['Oktober' => 1000],
+            ['November' => 1100],
+            ['Desember' => 1200],
+        ];
+
+        $data_minggu = [
+            ['Senin' => 100],
+            ['Selasa' => 200],
+            ['Rabu' => 300],
+            ['Kamis' => 400],
+            ['Jumat' => 500],
+            ['Sabtu' => 600],
+            ['Minggu' => 700],
+        ];
+
+        if ($request->date_type == 'YEAR') {
+            $data = $data_tahun;
+        } else if ($request->date_type == 'WEEK') {
+            $data = $data_minggu;
+        } else {
+            $data = $data_tahun;
+        }
+
+        return $this->sendResponse(0, 'Data Pemasukan dan Pengeluaran berhasil ditemukan', $data);
+    }
+
+    public function today_activities(Request $request)
+    {
+        // PEMASUKAN & PENGELUARAN KAS || CASHFLOW
+        $rules = [
+            'owner_code' => 'required|max:255',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
+        }
+
+        $data = [
+            'quota_delivery_transaction' => 3,
+            'total_delivery_transaction' => 5,
+            'quota_late_transaction' => 1,
+            'total_late_transaction' => 2,
+            'quota_success_transaction' => 4,
+            'total_success_transaction' => 3,
+        ];
+
+        return $this->sendResponse(0, 'Data Pemasukan dan Pengeluaran berhasil ditemukan', $data);
+    }
+
+    public function employee_attendances(Request $request)
+    {
+        // PEMASUKAN & PENGELUARAN KAS || CASHFLOW
+        $rules = [
+            'owner_code' => 'required|max:255',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
+        }
+
+        $data = [
+            'total_employees' => 10,
+            'total_attendances' => 8,
+            'total_absences' => 2,
+        ];
+
+        return $this->sendResponse(0, 'Data Pemasukan dan Pengeluaran berhasil ditemukan', $data);
     }
 }

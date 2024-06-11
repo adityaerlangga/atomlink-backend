@@ -21,8 +21,23 @@ class ServiceDepositController extends ApiController
         $this->middleware('auth:api', ['except' => []]);
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $rules = [
+            'outlet_code' => 'nullable|string|max:255',
+            'service_deposit_code' => 'nullable|string|max:255',
+            'sort_by' => 'nullable|in:service_deposit_name,created_at',
+            'order_by' => 'nullable|in:ASC,DESC',
+            'limit' => 'nullable|integer',
+            'offset' => 'nullable|integer',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
+        }
+
         $selects = [
             'service_deposits.service_deposit_code',
             'service_deposits.service_code',
@@ -36,67 +51,49 @@ class ServiceDepositController extends ApiController
             'service_deposits.service_deposit_expired_action',
             'service_deposits.is_active',
             'service_deposits.is_deleted',
+            'service_deposits.created_at',
+            'service_deposits.updated_at',
+            'service_deposits.outlet_code',
         ];
 
-        $service_deposits = ServiceDeposit::where('is_deleted', 0)
-                    ->select($selects)
-                    ->get();
+        $query = ServiceDeposit::query()->where('is_deleted', 0);
 
-        if (!$service_deposits) {
+        if ($request->has('outlet_code')) {
+            $query->where('service_deposits.outlet_code', $request->outlet_code);
+        }
+
+        if ($request->has('service_deposit_code')) {
+            $query->where('service_deposits.service_deposit_code', $request->service_deposit_code);
+            $data = $query->select($selects)->first();
+
+            if (!$data) {
+                return $this->sendError(1, "Deposit Layanan tidak ditemukan", null);
+            }
+
+            return $this->sendResponse(0, "Deposit Layanan berhasil ditemukan", $data);
+        }
+
+        if ($request->has('search')) {
+            $query->where('service_deposits.service_deposit_name', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->has('sort_by')) {
+            $order_by = $request->order_by ?? 'ASC';
+            $query->orderBy('service_deposits.' . $request->sort_by, $order_by);
+        }
+
+        $limit = $request->limit ?? 10;
+        $offset = $request->offset ?? 0;
+
+        $data = $query->select($selects)->limit($limit)
+            ->offset($offset)
+            ->get();
+
+        if ($data->isEmpty()) {
             return $this->sendError(1, "Deposit Layanan tidak ditemukan", null);
         }
 
-        if ($service_deposits->isEmpty()) {
-            return $this->sendError(1, "Deposit Layanan belum terdaftar pada sistem", null);
-        }
-
-        foreach ($service_deposits as $service_deposit) {
-            $service = Service::where('service_code', $service_deposit->service_code)
-                ->where('is_deleted', 0)
-                ->first();
-
-            $service_deposit->service = $service;
-        }
-
-        return $this->sendResponse(0, "Deposit Layanan berhasil ditemukan", $service_deposits);
-    }
-
-    public function show($service_deposit_code)
-    {
-        $selects = [
-            'service_deposits.service_deposit_code',
-            'service_deposits.service_code',
-            'service_deposits.service_deposit_name',
-            'service_deposits.service_deposit_quota',
-            'service_deposits.service_deposit_discount_percentage',
-            'service_deposits.service_deposit_price',
-            'service_deposits.service_deposit_period_type',
-            'service_deposits.service_deposit_active_period_days',
-            'service_deposits.service_deposit_active_period_type',
-            'service_deposits.service_deposit_expired_action',
-            'service_deposits.is_active',
-            'service_deposits.is_deleted',
-        ];
-
-        $service_deposit = ServiceDeposit::where('service_deposit_code', $service_deposit_code)
-                    ->where('is_deleted', 0)
-                    ->select($selects)
-                    ->first();
-
-        if (!$service_deposit) {
-            return $this->sendError(1, "Deposit Layanan tidak ditemukan", null);
-        }
-
-        $service = Service::where('service_code', $service_deposit->service_code)
-            ->first();
-
-        if (!$service) {
-            return $this->sendError(1, "Layanan Regular tidak terdaftar pada sistem", null);
-        }
-
-        $service_deposit->service = $service;
-
-        return $this->sendResponse(0, "Deposit Layanan berhasil ditemukan", $service_deposit);
+        return $this->sendResponse(0, "Deposit Layanan berhasil ditemukan", $data);
     }
 
     public function store(Request $request)
@@ -117,7 +114,7 @@ class ServiceDepositController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         $outlet = Outlet::where('outlet_code', $request->outlet_code)
@@ -200,7 +197,7 @@ class ServiceDepositController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         $outlet = Outlet::where('outlet_code', $request->outlet_code)
@@ -296,46 +293,5 @@ class ServiceDepositController extends ApiController
             DB::rollBack();
             return $this->sendError(2, "Deposit Layanan gagal dihapus", $e->getMessage());
         }
-    }
-
-    public function getByOutlet($outlet_code)
-    {
-        $selects = [
-            'service_deposits.service_deposit_code',
-            'service_deposits.service_code',
-            'service_deposits.service_deposit_name',
-            'service_deposits.service_deposit_quota',
-            'service_deposits.service_deposit_discount_percentage',
-            'service_deposits.service_deposit_price',
-            'service_deposits.service_deposit_period_type',
-            'service_deposits.service_deposit_active_period_days',
-            'service_deposits.service_deposit_active_period_type',
-            'service_deposits.service_deposit_expired_action',
-            'service_deposits.is_active',
-            'service_deposits.is_deleted',
-        ];
-
-        $service_deposits = ServiceDeposit::where('outlet_code', $outlet_code)
-                    ->where('is_deleted', 0)
-                    ->select($selects)
-                    ->get();
-
-        if (!$service_deposits) {
-            return $this->sendError(1, "Deposit Layanan tidak ditemukan", null);
-        }
-
-        if ($service_deposits->isEmpty()) {
-            return $this->sendError(1, "Deposit Layanan belum terdaftar pada sistem", null);
-        }
-
-        foreach ($service_deposits as $service_deposit) {
-            $service = Service::where('service_code', $service_deposit->service_code)
-                ->where('is_deleted', 0)
-                ->first();
-
-            $service_deposit->service = $service;
-        }
-
-        return $this->sendResponse(0, "Deposit Layanan berhasil ditemukan", $service_deposits);
     }
 }

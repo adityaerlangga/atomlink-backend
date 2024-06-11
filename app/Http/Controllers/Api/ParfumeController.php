@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+// use Log;
+use Illuminate\Support\Facades\Log;
 use App\Models\Owner;
 use App\Models\Outlet;
 use App\Models\Parfume;
@@ -17,8 +19,23 @@ class ParfumeController extends ApiController
         $this->middleware('auth:api', ['except' => []]);
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $rules = [
+            'outlet_code' => 'nullable|max:255',
+            'parfume_code' => 'nullable|max:255',
+            'sort_by' => 'nullable|in:outlet_name,created_at',
+            'order_by' => 'nullable|in:ASC,DESC',
+            'limit' => 'nullable|integer',
+            'offset' => 'nullable|integer',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
+        }
+
         $selects = [
             'parfume_code',
             'outlet_code',
@@ -27,13 +44,43 @@ class ParfumeController extends ApiController
             'is_deleted',
         ];
 
-        $data = Parfume::where('is_deleted', 0)
-            ->select($selects)
-            ->get();
+        $data = Parfume::query()->where('is_deleted', 0);
 
-        if (!$data) {
-            return $this->sendError(1, "Parfume tidak ditemukan", null);
+        if ($request->has('parfume_code')) {
+
+            $data = $data->where('parfume_code', $request->parfume_code)
+                ->select($selects)
+                ->first();
+
+            if (!$data) {
+                return $this->sendError(1, "Parfume tidak ditemukan", null);
+            }
+
+            return $this->sendResponse(0, "Parfume berhasil ditemukan", $data);
         }
+
+        if ($request->has('outlet_code')) {
+            $data->where('outlet_code', $request->outlet_code);
+        }
+
+        // search, sort_by, order_by
+        if ($request->has('search')) {
+            $data->where('parfume_name', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->has('sort_by')) {
+            $order_by = $request->order_by ?? 'ASC';
+            $data->orderBy($request->sort_by, $order_by);
+        }
+
+        // limit, offset
+        $limit = $request->has('limit') ? $request->limit : 10;
+        $offset = $request->has('offset') ? $request->offset : 0;
+
+        $data = $data->select($selects)
+            ->limit($limit)
+            ->offset($offset)
+            ->get();
 
         if ($data->isEmpty()) {
             return $this->sendError(1, "Parfume belum terdaftar", null);
@@ -41,6 +88,7 @@ class ParfumeController extends ApiController
 
         return $this->sendResponse(0, "Parfume berhasil ditemukan", $data);
     }
+
 
     public function show($parfume_code)
     {
@@ -75,11 +123,11 @@ class ParfumeController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         $is_primary_parfume = $request->is_parfume_primary;
-        if($is_primary_parfume == true) {
+        if ($is_primary_parfume == true) {
             $parfume = Parfume::where('outlet_code', $request->outlet_code)
                 ->where('is_parfume_primary', 1)
                 ->where('is_deleted', 0)
@@ -115,7 +163,7 @@ class ParfumeController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         $parfume = Parfume::where('parfume_code', $parfume_code)
@@ -128,7 +176,7 @@ class ParfumeController extends ApiController
 
         DB::beginTransaction();
         try {
-            if($request->is_parfume_primary == true) {
+            if ($request->is_parfume_primary == true) {
                 $primary_parfume_of_outlet = Parfume::where('outlet_code', $parfume->outlet_code)
                     ->where('is_parfume_primary', 1)
                     ->where('is_deleted', 0)
@@ -156,7 +204,6 @@ class ParfumeController extends ApiController
             DB::rollBack();
             return $this->sendError(2, "Parfume gagal diperbarui", $e->getMessage());
         }
-
     }
 
     public function destroy($parfume_code)
@@ -180,7 +227,7 @@ class ParfumeController extends ApiController
 
             DB::commit();
             return $this->sendResponse(0, "Parfume berhasil dihapus", $parfume);
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return $this->sendError(2, "Parfume gagal dihapus", $e->getMessage());
         }

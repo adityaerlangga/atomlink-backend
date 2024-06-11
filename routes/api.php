@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Api\OwnerController;
@@ -8,9 +9,10 @@ use App\Http\Controllers\Api\OutletController;
 use App\Http\Controllers\Api\ParfumeController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\VariableController;
 use App\Http\Controllers\Api\WorkshopController;
-use App\Http\Controllers\Api\ProductRackController;
+use App\Http\Controllers\Api\RackController;
 use App\Http\Controllers\Api\ServiceDepositController;
 
 // ======================= START: SETUP ======================= //
@@ -38,6 +40,8 @@ Route::get('optimize', function() {
     ]);
 });
 
+Route::get('unauthorized', [AuthController::class, 'unauthorized'])->name('unauthorized');
+
 
 // CRONJOB AUTO CANCEL EXPIRED TOPUP //
 Route::get('auto_cancel', [TopupController::class, 'autoCancel']);
@@ -50,14 +54,23 @@ Route::post('owner/register', [OwnerController::class, 'register']);
 Route::post('owner/login', [OwnerController::class, 'login']);
 
 Route::group(['middleware' => 'auth:owners'], function() {
+    Route::prefix('owner')->group(function() {
+        Route::get('finance', [OwnerController::class, 'finance']);
+        Route::get('cash-drawers', [OwnerController::class, 'cash_drawers']);
+        Route::get('cash-banks', [OwnerController::class, 'cash_banks']);
+        Route::get('cash-merchants', [OwnerController::class, 'cash_merchants']);
+        Route::get('cashflow', [OwnerController::class, 'cashflow']);
+        Route::get('gross-revenue', [OwnerController::class, 'gross_revenue']);
+        Route::get('today-activities', [OwnerController::class, 'today_activities']);
+        Route::get('employee-attendances', [OwnerController::class, 'employee_attendances']);
+    });
+    
     Route::prefix('outlets')->group(function() {
         Route::resource('/', OutletController::class)->parameters(['' => 'outlet_code']);
-        Route::get('owner', [OutletController::class, 'getByOwner']);
     });
 
     Route::prefix('workshops')->group(function() {
         Route::resource('/', WorkshopController::class)->parameters(['' => 'workshop_code']);
-        Route::get('owner/{owner_code}', [WorkshopController::class, 'getByOwner']);
     });
 
     Route::prefix('customers')->group(function() {
@@ -80,7 +93,6 @@ Route::group(['middleware' => 'auth:owners'], function() {
 
     Route::prefix('services')->group(function() {
         Route::resource('/', ServiceController::class)->parameters(['' => 'service_code']);
-        Route::get('outlet/{outlet_code}', [ServiceController::class, 'getByOutlet']);
     });
 
     Route::prefix('service-deposits')->group(function() {
@@ -88,9 +100,9 @@ Route::group(['middleware' => 'auth:owners'], function() {
         Route::get('outlet/{outlet_code}', [ServiceDepositController::class, 'getByOutlet']);
     });
 
-    Route::prefix('product-racks')->group(function() {
-        Route::resource('/', ProductRackController::class)->parameters(['' => 'product_rack_code']);
-        Route::get('outlet/{outlet_code}', [ProductRackController::class, 'getByOutlet']);
+    Route::prefix('racks')->group(function() {
+        Route::resource('/', RackController::class)->parameters(['' => 'rack_code']);
+        Route::get('outlet/{outlet_code}', [RackController::class, 'getByOutlet']);
     });
 
     Route::prefix('variable')->group(function() {

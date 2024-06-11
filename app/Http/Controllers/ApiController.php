@@ -43,7 +43,6 @@ class ApiController extends Controller
         return response()->json($response, 401);
     }
 
-
     public function normalize_result($result)
     {
 
@@ -61,7 +60,7 @@ class ApiController extends Controller
         $response = [
             'code' => 401,
             'success' => false,
-            'message' => 'Unauthenticated',
+            'message' => 'Unauthenticated', 
         ];
 
         return response()->json($response, 401);

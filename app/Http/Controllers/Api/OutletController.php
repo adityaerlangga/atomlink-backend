@@ -14,7 +14,8 @@ class OutletController extends ApiController
 {
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => []]);
+        // check middleware, if not login, send error json
+        $this->middleware('auth:owners');
     }
 
     public function index(Request $request)
@@ -31,7 +32,7 @@ class OutletController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         $selects = [
@@ -44,15 +45,13 @@ class OutletController extends ApiController
             'outlets.outlet_logo',
         ];
 
-        $query = Outlet::query();
+        $query = Outlet::query()->where('is_deleted', 0);
 
         if ($request->has('outlet_code')) {
             $query->where('outlet_code', $request->outlet_code);
-
-            $data = $query->where('is_deleted', 0)
-                ->leftJoin('variable_cities', 'outlets.city_code', '=', 'variable_cities.city_code')
-                ->select($selects)
-                ->first();
+            $data = $query->leftJoin('variable_cities', 'outlets.city_code', '=', 'variable_cities.city_code')
+                          ->select($selects)
+                          ->first();
 
             if (!$data) {
                 return $this->sendError(1, "Outlet tidak ditemukan", null);
@@ -65,31 +64,23 @@ class OutletController extends ApiController
             $query->where('owner_code', $request->owner_code);
         }
 
-        // Apply sorting only by outlet_name
-        if ($request->has('sort_by') && $request->sort_by == 'outlet_name') {
-            $order_by = $request->order_by ?? 'ASC';
-            $query->orderBy('outlets.outlet_name', $order_by);
+        if ($request->has('search')) {
+            $query->where('outlet_name', 'like', '%' . $request->search . '%');
         }
 
-        // Apply sorting only by created_at
-        if ($request->has('sort_by') && $request->sort_by == 'created_at') {
+        if ($request->has('sort_by')) {
             $order_by = $request->order_by ?? 'ASC';
-            $query->orderBy('outlets.created_at', $order_by);
+            $query->orderBy('outlets.' . $request->sort_by, $order_by);
         }
 
         $limit = $request->limit ?? 10;
         $offset = $request->offset ?? 0;
 
-        $data = $query->where('is_deleted', 0)
-            ->leftJoin('variable_cities', 'outlets.city_code', '=', 'variable_cities.city_code')
-            ->select($selects)
-            ->limit($limit)
-            ->offset($offset)
-            ->get();
-
-        if (!$data) {
-            return $this->sendError(1, "Outlet tidak ditemukan", null);
-        }
+        $data = $query->leftJoin('variable_cities', 'outlets.city_code', '=', 'variable_cities.city_code')
+                      ->select($selects)
+                      ->limit($limit)
+                      ->offset($offset)
+                      ->get();
 
         if ($data->isEmpty()) {
             return $this->sendError(1, "Outlet tidak ditemukan", null);
@@ -97,6 +88,7 @@ class OutletController extends ApiController
 
         return $this->sendResponse(0, "Outlet berhasil ditemukan", $data);
     }
+
 
     public function store(Request $request)
     {
@@ -113,7 +105,7 @@ class OutletController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         // VALIDATE OWNER_CODE
@@ -177,7 +169,7 @@ class OutletController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         $outlet = Outlet::where('outlet_code', $outlet_code)->first();

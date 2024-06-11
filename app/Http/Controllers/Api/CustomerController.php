@@ -17,8 +17,23 @@ class CustomerController extends ApiController
         $this->middleware('auth:api', ['except' => []]);
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $rules = [
+            'outlet_code' => 'nullable|max:255',
+            'customer_code' => 'nullable|max:255',
+            'sort_by' => 'nullable|in:outlet_name,created_at',
+            'order_by' => 'nullable|in:ASC,DESC',
+            'limit' => 'nullable|integer',
+            'offset' => 'nullable|integer',
+        ];
+
+        $validator = validateThis($request, $rules);
+
+        if ($validator->fails()) {
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
+        }
+
         $selects = [
             'customers.customer_code',
             'customers.outlet_code',
@@ -40,10 +55,41 @@ class CustomerController extends ApiController
             'customer_addresses.customer_address_label',
             'customer_addresses.is_customer_address_primary',
         ];
+        $data = Customer::query()->where('customers.is_deleted', 0);
 
-        $data = Customer::where('customers.is_deleted', 0)
-            ->leftJoin('customer_addresses', 'customers.customer_code', '=', 'customer_addresses.customer_code')
+        if ($request->has('customer_code')) {
+            $data = $data->where('customers.customer_code', $request->customer_code)
+                ->leftJoin('customer_addresses', 'customers.customer_code', '=', 'customer_addresses.customer_code')
+                ->select($selects)
+                ->first();
+
+            if (!$data) {
+                return $this->sendError(1, "Customer tidak ditemukan", null);
+            }
+
+            return $this->sendResponse(0, "Customer berhasil ditemukan", $data);
+        }
+
+        if ($request->has('outlet_code')) {
+            $data->where('customers.outlet_code', $request->outlet_code);
+        }
+
+        if ($request->has('search')) {
+            $data->where('customers.customer_name', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->has('sort_by')) {
+            $order_by = $request->order_by ?? 'ASC';
+            $data->orderBy('customers.' . $request->sort_by, $order_by);
+        }
+
+        $limit = $request->limit ?? 10;
+        $offset = $request->offset ?? 0;
+
+        $data = $data->leftJoin('customer_addresses', 'customers.customer_code', '=', 'customer_addresses.customer_code')
             ->select($selects)
+            ->limit($limit)
+            ->offset($offset)
             ->get();
 
         if (!$data) {
@@ -52,42 +98,6 @@ class CustomerController extends ApiController
 
         if ($data->isEmpty()) {
             return $this->sendError(1, "Belum ada customer yang terdaftar", null);
-        }
-
-        return $this->sendResponse(0, "Customer berhasil ditemukan", $data);
-    }
-
-    public function show($customer_code)
-    {
-        $selects = [
-            'customers.customer_code',
-            'customers.outlet_code',
-            'customers.customer_name',
-            'customers.customer_gender',
-            'customers.customer_title',
-            'customers.customer_whatsapp_number',
-            'customers.is_customer_have_addresses',
-            'customers.customer_institution',
-            'customers.customer_birth_date',
-            'customers.customer_religion',
-            'customers.customer_email',
-            'customer_addresses.customer_address_code',
-            'customer_addresses.customer_full_address',
-            'customer_addresses.customer_address_latitude',
-            'customer_addresses.customer_address_longitude',
-            'customer_addresses.customer_address_location_name',
-            'customer_addresses.customer_address_label',
-            'customer_addresses.is_customer_address_primary',
-        ];
-
-        $data = Customer::where('customers.customer_code', $customer_code)
-            ->where('customers.is_deleted', 0)
-            ->leftJoin('customer_addresses', 'customers.customer_code', '=', 'customer_addresses.customer_code')
-            ->select($selects)
-            ->first();
-
-        if (!$data) {
-            return $this->sendError(1, "Customer tidak ditemukan", null);
         }
 
         return $this->sendResponse(0, "Customer berhasil ditemukan", $data);
@@ -119,7 +129,7 @@ class CustomerController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         // VALIDATE OUTLET_CODE
@@ -184,7 +194,7 @@ class CustomerController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         $customer = Customer::where('customer_code', $customer_code)->first();

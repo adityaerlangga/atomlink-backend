@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ProductRackCategory extends Model
+class RackCategory extends Model
 {
     use HasFactory;
 
-    protected $table = 'product_rack_categories';
+    protected $table = 'rack_categories';
     protected $guarded = ['id'];
 }

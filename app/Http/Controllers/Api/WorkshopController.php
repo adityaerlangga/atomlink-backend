@@ -31,9 +31,8 @@ class WorkshopController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
-
 
         $selects = [
             'workshops.workshop_code',
@@ -57,13 +56,11 @@ class WorkshopController extends ApiController
             'workshop_production_steps.workshop_packaging',
         ];
 
-        $query = Workshop::query();
+        $query = Workshop::query()->where('workshops.is_deleted', 0);
 
         if ($request->has('workshop_code')) {
             $query->where('workshops.workshop_code', $request->workshop_code);
-
-            $data = $query->where('workshops.is_deleted', 0)
-                ->leftJoin('variable_cities', 'workshops.city_code', '=', 'variable_cities.city_code')
+            $data = $query->leftJoin('variable_cities', 'workshops.city_code', '=', 'variable_cities.city_code')
                 ->leftJoin('workshop_production_steps', 'workshops.workshop_code', '=', 'workshop_production_steps.workshop_code')
                 ->select($selects)
                 ->first();
@@ -79,33 +76,24 @@ class WorkshopController extends ApiController
             $query->where('workshops.owner_code', $request->owner_code);
         }
 
-
-        // Apply sorting only by workshop_name
-        if ($request->has('sort_by') && $request->sort_by == 'workshop_name') {
-            $order_by = $request->order_by ?? 'ASC';
-            $query->orderBy('workshops.workshop_name', $order_by);
+        if ($request->has('search')) {
+            $query->where('workshops.workshop_name', 'like', '%' . $request->search . '%');
         }
 
-        // Apply sorting only by created_at
-        if ($request->has('sort_by') && $request->sort_by == 'created_at') {
+        if ($request->has('sort_by')) {
             $order_by = $request->order_by ?? 'ASC';
-            $query->orderBy('workshops.created_at', $order_by);
+            $query->orderBy('workshops.' . $request->sort_by, $order_by);
         }
 
         $limit = $request->limit ?? 10;
         $offset = $request->offset ?? 0;
 
-        $data = $query->where('workshops.is_deleted', 0)
-            ->leftJoin('variable_cities', 'workshops.city_code', '=', 'variable_cities.city_code')
+        $data = $query->leftJoin('variable_cities', 'workshops.city_code', '=', 'variable_cities.city_code')
             ->leftJoin('workshop_production_steps', 'workshops.workshop_code', '=', 'workshop_production_steps.workshop_code')
             ->select($selects)
             ->limit($limit)
             ->offset($offset)
             ->get();
-
-        if (!$data) {
-            return $this->sendError(1, "Workshop tidak ditemukan", null);
-        }
 
         if ($data->isEmpty()) {
             return $this->sendError(1, "Workshop tidak ditemukan", null);
@@ -113,6 +101,7 @@ class WorkshopController extends ApiController
 
         return $this->sendResponse(0, "Workshop berhasil ditemukan", $data);
     }
+
 
     public function store(Request $request)
     {
@@ -140,7 +129,7 @@ class WorkshopController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         // VALIDATE OWNER_CODE
@@ -214,11 +203,11 @@ class WorkshopController extends ApiController
         $validator = validateThis($request, $rules);
 
         if ($validator->fails()) {
-            return $this->sendError(1, 'Params not complete', validationMessage($validator->errors()));
+            return $this->sendError(2, 'Params not complete', validationMessage($validator->errors()));
         }
 
         $workshop = Workshop::where('workshop_code', $workshop_code)
-                        ->first();
+            ->first();
         if (!$workshop) {
             return $this->sendError(1, "Workshop tidak ditemukan", null);
         }
@@ -279,6 +268,4 @@ class WorkshopController extends ApiController
             return $this->sendError(2, "Workshop gagal dihapus", $e->getMessage());
         }
     }
-
-
 }
