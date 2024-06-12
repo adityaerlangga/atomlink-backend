@@ -8,5 +8,7 @@ jobs:
     name: Pulling-Code-Action
     runs-on: ubuntu-latest
     steps:
-    - name: Run deploy script
-      run: bash deploy.sh
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Run pull script
+      run: bash pull.sh
