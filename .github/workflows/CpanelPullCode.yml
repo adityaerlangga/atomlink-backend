@@ -1,0 +1,12 @@
+name: Updating Laravel 10 Code from Github to CPanel
+on:
+  push:
+    branches:
+      - develop
+jobs:
+  Pulling-Code-Action:
+    name: Pulling-Code-Action
+    runs-on: ubuntu-latest
+    steps:
+    - name: Run deploy script
+      run: bash deploy.sh
