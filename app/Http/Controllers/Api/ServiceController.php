@@ -44,6 +44,7 @@ class ServiceController extends ApiController
             'services.service_name',
             'services.service_price',
             'services.unit_code',
+            'variable_units.unit_name',
             'services.service_duration_days',
             'services.service_duration_hours',
             'services.service_category_code',
@@ -73,6 +74,7 @@ class ServiceController extends ApiController
         if ($request->has('service_code')) {
             $query->where('services.service_code', $request->service_code);
             $data = $query->leftJoin('variable_service_categories', 'services.service_category_code', '=', 'variable_service_categories.service_category_code')
+                ->leftJoin('variable_units', 'services.unit_code', '=', 'variable_units.unit_code')
                 ->select($selects)
                 ->first();
 
@@ -100,6 +102,7 @@ class ServiceController extends ApiController
         $offset = $request->offset ?? 0;
 
         $data = $query->leftJoin('variable_service_categories', 'services.service_category_code', '=', 'variable_service_categories.service_category_code')
+            ->leftJoin('variable_units', 'services.unit_code', '=', 'variable_units.unit_code')
             ->select($selects)
             ->limit($limit)
             ->offset($offset)
