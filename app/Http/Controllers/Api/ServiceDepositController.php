@@ -54,15 +54,18 @@ class ServiceDepositController extends ApiController
             'service_deposits.created_at',
             'service_deposits.updated_at',
             'service_deposits.outlet_code',
+
+            'services.service_name',
         ];
 
-        $query = ServiceDeposit::query()->where('is_deleted', 0);
+        $query = ServiceDeposit::query()->where('service_deposits.is_deleted', 0);
 
         if ($request->has('outlet_code')) {
             $query->where('service_deposits.outlet_code', $request->outlet_code);
         }
 
         if ($request->has('service_deposit_code')) {
+            $query->leftJoin('services', 'services.service_code', '=', 'service_deposits.service_code');
             $query->where('service_deposits.service_deposit_code', $request->service_deposit_code);
             $data = $query->select($selects)->first();
 
@@ -85,7 +88,8 @@ class ServiceDepositController extends ApiController
         $limit = $request->limit ?? 10;
         $offset = $request->offset ?? 0;
 
-        $data = $query->select($selects)->limit($limit)
+        $data = $query->leftJoin('services', 'services.service_code', '=', 'service_deposits.service_code')
+            ->select($selects)->limit($limit)
             ->offset($offset)
             ->get();
 
