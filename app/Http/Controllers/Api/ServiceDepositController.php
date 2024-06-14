@@ -106,9 +106,9 @@ class ServiceDepositController extends ApiController
             'service_deposit_discount_percentage' => 'required|numeric|max:100',
             'service_deposit_price' => 'required|numeric',
             'service_deposit_period_type' => 'required|string|in:UNLIMITED,ACTIVE_PERIOD',
-            'service_deposit_active_period_days' => 'required_if:service_deposit_period_type,1|numeric',
-            'service_deposit_active_period_type' => 'required_if:service_deposit_period_type,1|string|in:ACCUMULATION,OLDEST,NEWEST',
-            'service_deposit_expired_action' => 'required_if:service_deposit_period_type,1|string|in:BURN,ROLL_UP',
+            'service_deposit_active_period_days' => 'nullable|required_if:service_deposit_period_type,ACTIVE_PERIOD|numeric',
+            'service_deposit_active_period_type' => 'nullable|required_if:service_deposit_period_type,ACTIVE_PERIOD|string|in:ACCUMULATION,OLDEST,NEWEST',
+            'service_deposit_expired_action' => 'nullable|required_if:service_deposit_period_type,ACTIVE_PERIOD|string|in:BURN,ROLL_UP',
         ];
 
         $validator = validateThis($request, $rules);
